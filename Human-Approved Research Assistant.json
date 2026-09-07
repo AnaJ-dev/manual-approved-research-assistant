@@ -1,0 +1,450 @@
+{
+  "name": "Human-Approved Research Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        304
+      ],
+      "id": "14f1c4bd-040e-478c-a3da-72f01f359777",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        544
+      ],
+      "id": "5fdfe67e-1914-49e1-81ce-baaee016a3b8",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "95a79d05-40df-4247-b7d7-3ef3c99efae4",
+      "name": "research chat message",
+      "webhookId": "a3ae5975-d4c4-44a5-b04c-7f3c7e773985",
+      "notes": "Chat Trigger specifically for chat-based AI workflows"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Research the topic provided by the user using only the available research tools.\n\nAnswer the user's actual question. Do not replace the user's topic with another company, product, or subject.\n\n\nUse the Wikipedia research tool once when research is needed. After receiving the tool result, answer the user. Do not call the tool repeatedly.\n\nIf the available tools do not contain enough information to answer reliably, clearly state that there is not enough information rather than inventing an answer.\n\nAfter the research, propose one useful follow-up research action.\n\nDo not claim that any proposed follow-up action has been executed.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6ab4c98b-b98f-4c22-b006-3fdf8aced3a7",
+      "name": "AI Research Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Search Wikipedia for the user's topic and return the relevant article information. Use the AI-controlled search parameter once, then return the result to the agent.",
+        "url": "https://en.wikipedia.org/w/api.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "query"
+            },
+            {
+              "name": "generator",
+              "value": "search"
+            },
+            {
+              "name": "gsrsearch",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            },
+            {
+              "name": "gsrlimit",
+              "value": "5"
+            },
+            {
+              "name": "prop",
+              "value": "extracts"
+            },
+            {
+              "name": "exintro",
+              "value": "1"
+            },
+            {
+              "name": "explaintext",
+              "value": "1"
+            },
+            {
+              "name": "redirects",
+              "value": "1"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "formatversion",
+              "value": "2"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-research-assistant/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        320
+      ],
+      "id": "dfbc2dbf-35cc-438e-a24a-9b188e1ec777",
+      "name": "HTTP Request- Wikipedia search tool"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "message": "{{ $('AI Research Agent').item.json.output }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        -144
+      ],
+      "id": "ef21765f-02f9-435b-a6be-7ff846867eae",
+      "name": "Manual approval",
+      "webhookId": "3d2b66c3-37a2-482f-9981-68282812567b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d785258e-867f-4020-ad9c-f8a89452f296",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        -144
+      ],
+      "id": "7672afcb-6d7a-43ed-8b74-70de3502ec19",
+      "name": "Approval Decision"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "vfhkSwWfrGMZnzFw",
+          "mode": "list",
+          "cachedResultName": "FOLLOW-UP",
+          "cachedResultUrl": "/projects/n6AwyIfmypvA4q3S/datatables/vfhkSwWfrGMZnzFw"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created": "={{ $now }}",
+            "status": "rejected",
+            "proposedAction": "={{ $('AI Research Agent').item.json.output }}",
+            "topic": "={{ $('research chat message').item.json.chatInput }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "proposedAction",
+              "displayName": "proposedAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created",
+              "displayName": "created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "2e3585ba-8e1f-4e8c-b33a-cad57efbf302",
+      "name": "Status rejected:follow-up table"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "vfhkSwWfrGMZnzFw",
+          "mode": "list",
+          "cachedResultName": "FOLLOW-UP",
+          "cachedResultUrl": "/projects/n6AwyIfmypvA4q3S/datatables/vfhkSwWfrGMZnzFw"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "topic": "={{ $('research chat message').item.json.chatInput }}",
+            "proposedAction": "={{ $('AI Research Agent').item.json.output }}",
+            "status": "approved",
+            "created": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "proposedAction",
+              "displayName": "proposedAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created",
+              "displayName": "created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        -224
+      ],
+      "id": "64a026ea-a99f-4eb3-b10a-d8d618719bf6",
+      "name": "Save Approved:follow-up table",
+      "notes": "approvalStatus = approved\nexecuted = false\nstatus = execution_failed"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Research Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Research Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "research chat message": {
+      "main": [
+        [
+          {
+            "node": "AI Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Manual approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request- Wikipedia search tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Research Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual approval": {
+      "main": [
+        [
+          {
+            "node": "Approval Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Decision": {
+      "main": [
+        [
+          {
+            "node": "Save Approved:follow-up table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Status rejected:follow-up table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Approved:follow-up table": {
+      "main": [
+        [],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3a652ad4-d024-4e4d-aef5-6132888e3249",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "243848769e1287b639ac1bac0ecb183f28020c0f19c0931ea7428227bda012dd"
+  },
+  "nodeGroups": [],
+  "id": "1k0LpJ4wPkJls7ir",
+  "tags": []
+}
