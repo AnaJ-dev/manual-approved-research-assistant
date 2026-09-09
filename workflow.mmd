@@ -1,9 +1,0 @@
-flowchart TD
-    A[Research Chat] --> B[AI Research Agent]
-    C[Gemini Chat Model] -.-> B
-    D[Simple Memory] -.-> B
-    E[Wikipedia HTTP Search Tool] -.-> B
-    B --> F[Manual Approval]
-    F --> G{Approval Decision}
-    G -->|Approved| H[Save Approved]
-    G -->|Rejected| I[Save Rejected]
