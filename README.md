@@ -1,4 +1,4 @@
-# Research Assistant - manual approvsl
+# Research Assistant - manual approval
 
 n8n workflow that:
 - accepts a research request in chat
